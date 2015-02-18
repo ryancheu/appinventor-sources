@@ -1183,7 +1183,7 @@ public final class Canvas extends AndroidViewComponent implements ComponentConta
     // Log.i(LOG_TAG, String.format("PaintSyle.FILL = " + Paint.Style.FILL));
     //Log.i(LOG_TAG, String.format("PaintSyle.STROKE = " + Paint.Style.STROKE));
     Paint p = new Paint(paint);
-    p.setStyle(fill ? Paint.Style.FILL : Paint.Style.STROKE);
+    p.setStyle(fill ? Paint.Style.FILL_AND_STROKE : Paint.Style.STROKE);
     // Log.i(LOG_TAG, String.format("PaintSyle = " + p.getStyle()));
     view.canvas.drawCircle(centerX, centerY, radius, p);
     view.invalidate();
