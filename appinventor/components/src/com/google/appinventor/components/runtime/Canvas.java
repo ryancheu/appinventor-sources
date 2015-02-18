@@ -114,6 +114,7 @@ public final class Canvas extends AndroidViewComponent implements ComponentConta
   private static final int DEFAULT_BACKGROUND_COLOR = Component.COLOR_WHITE;
   private static final int DEFAULT_TEXTALIGNMENT = Component.ALIGNMENT_CENTER;
   private static final int FLING_INTERVAL = 1000;  // ms
+  private static final int DEFAULT_PAINT_FLAGS = Paint.ANTI_ALIAS_FLAG;
 
   // Keep track of enclosed sprites.  This list should always be
   // sorted by increasing sprite.Z().
@@ -662,7 +663,7 @@ public final class Canvas extends AndroidViewComponent implements ComponentConta
     view = new CanvasView(context);
     container.$add(this);
 
-    paint = new Paint();
+    paint = new Paint(DEFAULT_PAINT_FLAGS);
 
     // Set default properties.
     paint.setStrokeWidth(DEFAULT_LINE_WIDTH);
