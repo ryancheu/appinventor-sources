@@ -44,6 +44,8 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -184,34 +186,64 @@ public final class Canvas extends AndroidViewComponent implements ComponentConta
     /**
      * The set of sprites encountered in a touch or drag sequence.  Checks are
      * only made for sprites at the endpoints of each drag.
+     * Maps from pointerID in motionEvent to list of Sprites
      */
-    private final List<Sprite> draggedSprites = new ArrayList<Sprite>();
+    private final Map<Integer, List<Sprite>> draggedSpritesMap = new HashMap<Integer, List<Sprite>>();
 
-    // startX and startY hold the coordinates of where a touch/drag started
-    private static final int UNSET = -1;
-    private float startX = UNSET;
-    private float startY = UNSET;
+    private static final float UNSET = -1;
 
-    // lastX and lastY hold the coordinates of the previous step of a drag
-    private float lastX = UNSET;
-    private float lastY = UNSET;
+    // startX and startY map from pointerID to
+    // the coordinates of where a touch/drag started
+    private Map<Integer, Float> startXMap = new HashMap<Integer, Float>();
+    private Map<Integer, Float> startYMap = new HashMap<Integer, Float>();
+
+    // lastX and lastY map from pointerID to
+    // the coordinates of the previous step of a drag
+    private Map<Integer, Float> lastXMap = new HashMap<Integer, Float>();
+    private Map<Integer, Float> lastYMap = new HashMap<Integer, Float>();
 
     // Is this sequence of events a drag? I.e., has the touch point moved away
     // from the start point?
-    private boolean isDrag = false;
 
-    private boolean drag = false;
+    //TODO: What is the difference between these two variables?
+    private Map<Integer, Boolean> isDragMap = new HashMap<Integer, Boolean>();
+    private Map<Integer, Boolean> dragMap = new HashMap<Integer, Boolean>();
 
     void parse(MotionEvent event) {
       int width = Width();
       int height = Height();
 
+      float x;
+      float y;
+
+      int action;
+      int pointerID;
+
+
+      // Need to check the API level since multitouch isn't available
+      // on API levels below 8 (Android 2.2)
+      int apiLevel = Integer.valueOf(android.os.Build.VERSION.SDK);
+      if ( apiLevel >= 8 ) {
+        action = event.getActionMasked();
+        int pointerIndex = event.getActionIndex();
+        x = event.getX(pointerIndex);
+        y = event.getY(pointerIndex);
+        pointerID = event.getPointerId(pointerIndex);
+      }
+      else {
+        action = event.getAction();
+        x = event.getX();
+        y = event.getY();
+        //Default to 0 for APIs without multitouch
+        pointerID = 0;
+      }
+
       // Coordinates less than 0 can be returned if a move begins within a
       // view and ends outside of it.  Because negative coordinates would
       // probably confuse the user (as they did me) and would not be useful,
       // we replace any negative values with zero.
-      float x = Math.max(0, (int) event.getX());
-      float y = Math.max(0, (int) event.getY());
+      x = Math.max(0, (int) x);
+      y = Math.max(0, (int) y);
 
       // Also make sure that by adding or subtracting a half finger that
       // we don't go out of bounds.
@@ -221,8 +253,42 @@ public final class Canvas extends AndroidViewComponent implements ComponentConta
           Math.min(width - 1, (int) x + HALF_FINGER_WIDTH),
           Math.min(height - 1, (int) y + HALF_FINGER_HEIGHT));
 
-      switch (event.getAction()) {
+      if ( draggedSpritesMap.get(pointerID) == null ) {
+        draggedSpritesMap.put(pointerID, new ArrayList<Sprite>());
+      }
+      if ( isDragMap.get(pointerID) == null) {
+        isDragMap.put(pointerID, false);
+      }
+      if ( dragMap.get(pointerID) == null) {
+        dragMap.put(pointerID, false);
+      }
+      if ( startXMap.get(pointerID) == null) {
+        startXMap.put(pointerID, UNSET);
+      }
+      if ( startYMap.get(pointerID) == null) {
+        startYMap.put(pointerID, UNSET);
+      }
+      if ( lastXMap.get(pointerID) == null) {
+        lastXMap.put(pointerID, UNSET);
+      }
+      if ( lastYMap.get(pointerID) == null) {
+        lastYMap.put(pointerID, UNSET);
+      }
+
+      // To keep the code clean, we will copy the values out of the maps
+      // at the start of the switch, and put them back at the end
+      boolean isDrag = isDragMap.get(pointerID);
+      boolean drag = dragMap.get(pointerID);
+      float startX = startXMap.get(pointerID);
+      float startY = startYMap.get(pointerID);
+      float lastX = lastXMap.get(pointerID);
+      float lastY = lastYMap.get(pointerID);
+      List<Sprite> draggedSprites = draggedSpritesMap.get(pointerID);
+
+
+      switch (action) {
         case MotionEvent.ACTION_DOWN:
+        case MotionEvent.ACTION_POINTER_DOWN:
           draggedSprites.clear();
           startX = x;
           startY = y;
@@ -281,6 +347,7 @@ public final class Canvas extends AndroidViewComponent implements ComponentConta
           break;
 
         case MotionEvent.ACTION_UP:
+        case MotionEvent.ACTION_POINTER_UP:
           // If we never strayed far from the start point, it's a tap.  (If we
           // did stray far, we've already handled the movements in the ACTION_MOVE
           // case.)
@@ -318,6 +385,14 @@ public final class Canvas extends AndroidViewComponent implements ComponentConta
           lastY = UNSET;
           break;
       }
+
+      // Update the values in the map with updated values
+      isDragMap.put(pointerID, isDrag);
+      dragMap.put(pointerID, drag);
+      startXMap.put(pointerID, startX);
+      startYMap.put(pointerID, startY);
+      lastXMap.put(pointerID, lastX);
+      lastYMap.put(pointerID, lastY);
     }
   }
 
