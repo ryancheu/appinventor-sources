@@ -59,7 +59,7 @@ public class EmailAddressAdapter extends ResourceCursorAdapter {
     super(context, android.R.layout.simple_dropdown_item_1line, null);
     contentResolver = context.getContentResolver();
     this.context = context;
-    if (SdkLevel.getLevel() >= SdkLevel.LEVEL_HONEYCOMB) {
+    if (SdkLevel.getLevel() >= SdkLevel.LEVEL_HONEYCOMB_MR1) {
       SORT_ORDER = HoneycombUtil.getTimesContacted() + " DESC, " + HoneycombUtil.getDisplayName();
     } else {
       SORT_ORDER = People.TIMES_CONTACTED + " DESC, " + People.NAME;
@@ -74,7 +74,7 @@ public class EmailAddressAdapter extends ResourceCursorAdapter {
     String name = "";
     String address = "";
 
-    if (SdkLevel.getLevel() >= SdkLevel.LEVEL_HONEYCOMB) {
+    if (SdkLevel.getLevel() >= SdkLevel.LEVEL_HONEYCOMB_MR1) {
       name = cursor.getString(POST_HONEYCOMB_NAME_INDEX);
       address = cursor.getString(POST_HONEYCOMB_EMAIL_INDEX);
     } else {
@@ -94,7 +94,7 @@ public class EmailAddressAdapter extends ResourceCursorAdapter {
     String name = "";
     String address = "";
 
-    if (SdkLevel.getLevel() >= SdkLevel.LEVEL_HONEYCOMB) {
+    if (SdkLevel.getLevel() >= SdkLevel.LEVEL_HONEYCOMB_MR1) {
       name = cursor.getString(POST_HONEYCOMB_NAME_INDEX);
       address = cursor.getString(POST_HONEYCOMB_EMAIL_INDEX);
     } else {
@@ -135,7 +135,7 @@ public class EmailAddressAdapter extends ResourceCursorAdapter {
     if (constraint != null) {
       String filter = DatabaseUtils.sqlEscapeString(constraint.toString() + '%');
 
-      if (SdkLevel.getLevel() >= SdkLevel.LEVEL_HONEYCOMB) {
+      if (SdkLevel.getLevel() >= SdkLevel.LEVEL_HONEYCOMB_MR1) {
         db = HoneycombUtil.getDataContentUri();
         s.append("(" + HoneycombUtil.getDataMimeType() + "='" + HoneycombUtil.getEmailType() + "')");
         s.append(" AND ");
@@ -163,7 +163,7 @@ public class EmailAddressAdapter extends ResourceCursorAdapter {
       }
     }
 
-    if (SdkLevel.getLevel() >= SdkLevel.LEVEL_HONEYCOMB) {
+    if (SdkLevel.getLevel() >= SdkLevel.LEVEL_HONEYCOMB_MR1) {
       return contentResolver.query(db, POST_HONEYCOMB_PROJECTION,
           where, null, SORT_ORDER);
     } else {

@@ -93,9 +93,9 @@ public class ContactPicker extends Picker implements ActivityResultListener {
     super(container);
     activityContext = container.$context();
 
-    if (SdkLevel.getLevel() >= SdkLevel.LEVEL_HONEYCOMB && intentUri.equals(Contacts.People.CONTENT_URI)) {
+    if (SdkLevel.getLevel() >= SdkLevel.LEVEL_HONEYCOMB_MR1 && intentUri.equals(Contacts.People.CONTENT_URI)) {
       this.intentUri = HoneycombUtil.getContentUri();
-    } else if (SdkLevel.getLevel() >= SdkLevel.LEVEL_HONEYCOMB && intentUri.equals(Contacts.Phones.CONTENT_URI)) {
+    } else if (SdkLevel.getLevel() >= SdkLevel.LEVEL_HONEYCOMB_MR1 && intentUri.equals(Contacts.Phones.CONTENT_URI)) {
       this.intentUri = HoneycombUtil.getPhoneContentUri();
     } else {
       this.intentUri = intentUri;
@@ -186,7 +186,7 @@ public class ContactPicker extends Picker implements ActivityResultListener {
 
       // Pre- and post-Honeycomb need different URIs.
       String desiredContactUri = "";
-      if (SdkLevel.getLevel() >= SdkLevel.LEVEL_HONEYCOMB) {
+      if (SdkLevel.getLevel() >= SdkLevel.LEVEL_HONEYCOMB_MR1) {
         desiredContactUri = "//com.android.contacts/contact";
       } else {
         desiredContactUri = "//contacts/people";
@@ -196,7 +196,7 @@ public class ContactPicker extends Picker implements ActivityResultListener {
         Cursor contactCursor = null;
         Cursor dataCursor = null;
         try {
-          if (SdkLevel.getLevel() >= SdkLevel.LEVEL_HONEYCOMB) {
+          if (SdkLevel.getLevel() >= SdkLevel.LEVEL_HONEYCOMB_MR1) {
             CONTACT_PROJECTION = HoneycombUtil.getContactProjection();
             contactCursor = activityContext.getContentResolver().query(contactUri,
                 CONTACT_PROJECTION, null, null, null);

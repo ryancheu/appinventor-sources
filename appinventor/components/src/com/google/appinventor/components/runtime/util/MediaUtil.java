@@ -204,7 +204,7 @@ public class MediaUtil {
       case CONTACT_URI:
         // Open the photo for the contact.
         InputStream is = null;
-        if (SdkLevel.getLevel() >= SdkLevel.LEVEL_HONEYCOMB) {
+        if (SdkLevel.getLevel() >= SdkLevel.LEVEL_HONEYCOMB_MR1) {
           is = HoneycombUtil.openContactPhotoInputStreamHelper(form.getContentResolver(),
               Uri.parse(mediaPath));
         } else {

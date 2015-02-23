@@ -110,7 +110,7 @@ public class PhoneNumberPicker extends ContactPicker {
       Uri phoneUri = data.getData();
 
       String desiredPhoneUri = "";
-      if (SdkLevel.getLevel() >= SdkLevel.LEVEL_HONEYCOMB) {
+      if (SdkLevel.getLevel() >= SdkLevel.LEVEL_HONEYCOMB_MR1) {
         desiredPhoneUri = "//com.android.contacts/data";
       } else {
         desiredPhoneUri = "//contacts/phones";
@@ -120,7 +120,7 @@ public class PhoneNumberPicker extends ContactPicker {
         Cursor contactCursor = null;
         Cursor dataCursor = null;
         try {
-          if (SdkLevel.getLevel() >= SdkLevel.LEVEL_HONEYCOMB) {
+          if (SdkLevel.getLevel() >= SdkLevel.LEVEL_HONEYCOMB_MR1) {
             NAME_PROJECTION = HoneycombUtil.getNameProjection();
             contactCursor = activityContext.getContentResolver().query(phoneUri,
                 NAME_PROJECTION, null, null, null);
