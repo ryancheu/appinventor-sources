@@ -8,6 +8,7 @@ package com.google.appinventor.components.runtime;
 
 import com.google.appinventor.components.annotations.SimpleObject;
 import com.google.appinventor.components.common.ComponentConstants;
+import com.google.appinventor.components.runtime.util.SdkLevel;
 
 import android.content.Context;
 import android.view.ViewGroup;
@@ -97,6 +98,10 @@ public final class LinearLayout implements Layout {
     layoutManager.setOrientation(
         orientation == ComponentConstants.LAYOUT_ORIENTATION_HORIZONTAL ?
         android.widget.LinearLayout.HORIZONTAL : android.widget.LinearLayout.VERTICAL);
+
+    if ( SdkLevel.getLevel() >= SdkLevel.LEVEL_HONEYCOMB ) {
+      layoutManager.setMotionEventSplittingEnabled(true);
+    }
   }
 
   // Layout implementation
