@@ -253,25 +253,16 @@ public final class Canvas extends AndroidViewComponent implements ComponentConta
           Math.min(width - 1, (int) x + HALF_FINGER_WIDTH),
           Math.min(height - 1, (int) y + HALF_FINGER_HEIGHT));
 
+
+      // Need to intialize values if it's the first time this pointerID
+      // has been used.
       if ( draggedSpritesMap.get(pointerID) == null ) {
         draggedSpritesMap.put(pointerID, new ArrayList<Sprite>());
-      }
-      if ( isDragMap.get(pointerID) == null) {
         isDragMap.put(pointerID, false);
-      }
-      if ( dragMap.get(pointerID) == null) {
         dragMap.put(pointerID, false);
-      }
-      if ( startXMap.get(pointerID) == null) {
         startXMap.put(pointerID, UNSET);
-      }
-      if ( startYMap.get(pointerID) == null) {
         startYMap.put(pointerID, UNSET);
-      }
-      if ( lastXMap.get(pointerID) == null) {
         lastXMap.put(pointerID, UNSET);
-      }
-      if ( lastYMap.get(pointerID) == null) {
         lastYMap.put(pointerID, UNSET);
       }
 
@@ -284,7 +275,6 @@ public final class Canvas extends AndroidViewComponent implements ComponentConta
       float lastX = lastXMap.get(pointerID);
       float lastY = lastYMap.get(pointerID);
       List<Sprite> draggedSprites = draggedSpritesMap.get(pointerID);
-
 
       switch (action) {
         case MotionEvent.ACTION_DOWN:
@@ -302,48 +292,89 @@ public final class Canvas extends AndroidViewComponent implements ComponentConta
               sprite.TouchDown(startX, startY);
             }
           }
-          TouchDown(startX, startY);
+          TouchDown(startX, startY, pointerID);
           break;
 
         case MotionEvent.ACTION_MOVE:
-          // Ensure that this was preceded by an ACTION_DOWN
-          if (startX == UNSET || startY == UNSET || lastX == UNSET || lastY == UNSET) {
-            Log.w(LOG_TAG, "In Canvas.MotionEventParser.parse(), " +
-                "an ACTION_MOVE was passed without a preceding ACTION_DOWN: " + event);
-          }
+	  // Move is only called once for all pointers so we need to
+	  // iterate through all pointers on screen and process each
+	  // of them separately.
+	  for ( Integer pID : startXMap.keySet() ) {
+	    pointerID = pID;
 
-          // If the new point is near the start point, it may just be a tap
-          if (!isDrag &&
-              (Math.abs(x - startX) < TAP_THRESHOLD && Math.abs(y - startY) < TAP_THRESHOLD)) {
-            break;
-          }
-          // Otherwise, it's a drag.
-          isDrag = true;
-          drag = true;
+	    isDrag = isDragMap.get(pointerID);
+	    drag = dragMap.get(pointerID);
+	    startX = startXMap.get(pointerID);
+	    startY = startYMap.get(pointerID);
+	    lastX = lastXMap.get(pointerID);
+	    lastY = lastYMap.get(pointerID);
+	    draggedSprites = draggedSpritesMap.get(pointerID);
 
-          // Update draggedSprites by adding any that are currently being
-          // touched.
-          for (Sprite sprite : sprites) {
-            if (!draggedSprites.contains(sprite)
-                && sprite.Enabled() && sprite.Visible()
-                && sprite.intersectsWith(rect)) {
-              draggedSprites.add(sprite);
-            }
-          }
+	    // Only process pointers that are currently down
+	    if ( startX == UNSET ) {
+	      continue;
+	    }
 
-          // Raise a Dragged event for any affected sprites
-          boolean handled = false;
-          for (Sprite sprite : draggedSprites) {
-            if (sprite.Enabled() && sprite.Visible()) {
-              sprite.Dragged(startX, startY, lastX, lastY, x, y);
-              handled = true;
-            }
-          }
 
-          // Last argument indicates whether a sprite handled the drag
-          Dragged(startX, startY, lastX, lastY, x, y, handled);
-          lastX = x;
-          lastY = y;
+	    // We need to update the x,y if multitouch is supported
+	    if ( apiLevel >= 8 ) {
+	      int pointerIndex = event.findPointerIndex(pointerID);
+	      x = Math.max(0, (int)event.getX(pointerIndex));
+	      y = Math.max(0, (int)event.getY(pointerIndex));
+	      rect = new BoundingBox(
+				     Math.max(0, (int) x - HALF_FINGER_HEIGHT),
+				     Math.max(0, (int) y - HALF_FINGER_WIDTH),
+				     Math.min(width - 1, (int) x + HALF_FINGER_WIDTH),
+				     Math.min(height - 1, (int) y + HALF_FINGER_HEIGHT));
+	    }
+
+	    // Ensure that this was preceded by an ACTION_DOWN
+	    if (startX == UNSET || startY == UNSET || lastX == UNSET || lastY == UNSET) {
+	      Log.w(LOG_TAG, "In Canvas.MotionEventParser.parse(), " +
+		    "an ACTION_MOVE was passed without a preceding ACTION_DOWN: " + event);
+	      continue;
+	    }
+
+	    // If the new point is near the start point, it may just be a tap
+	    if (!isDrag &&
+		(Math.abs(x - startX) < TAP_THRESHOLD && Math.abs(y - startY) < TAP_THRESHOLD)) {
+	      continue;
+	    }
+	    // Otherwise, it's a drag.
+	    isDrag = true;
+	    drag = true;
+
+	    // Update draggedSprites by adding any that are currently being
+	    // touched.
+	    for (Sprite sprite : sprites) {
+	      if (!draggedSprites.contains(sprite)
+		  && sprite.Enabled() && sprite.Visible()
+		  && sprite.intersectsWith(rect)) {
+		draggedSprites.add(sprite);
+	      }
+	    }
+
+	    // Raise a Dragged event for any affected sprites
+	    boolean handled = false;
+	    for (Sprite sprite : draggedSprites) {
+	      if (sprite.Enabled() && sprite.Visible()) {
+		sprite.Dragged(startX, startY, lastX, lastY, x, y);
+		handled = true;
+	      }
+	    }
+
+	    // Last argument indicates whether a sprite handled the drag
+	    Dragged(startX, startY, lastX, lastY, x, y, pointerID, handled);
+	    lastX = x;
+	    lastY = y;
+
+	    isDragMap.put(pointerID, isDrag);
+	    dragMap.put(pointerID, drag);
+	    startXMap.put(pointerID, startX);
+	    startYMap.put(pointerID, startY);
+	    lastXMap.put(pointerID, lastX);
+	    lastYMap.put(pointerID, lastY);
+	  }
           break;
 
         case MotionEvent.ACTION_UP:
@@ -353,7 +384,7 @@ public final class Canvas extends AndroidViewComponent implements ComponentConta
           // case.)
           if (!drag) {
             // It's a tap
-            handled = false;
+            boolean handled = false;
             for (Sprite sprite : draggedSprites) {
               if (sprite.Enabled() && sprite.Visible()) {
                 sprite.Touched(x, y);
@@ -375,7 +406,7 @@ public final class Canvas extends AndroidViewComponent implements ComponentConta
           // This is intentionally outside the if (!drag) block.
           // Even the release of a drag on the canvas should fire
           // a touch-up event.
-          TouchUp(x, y);
+          TouchUp(x, y, pointerID);
 
           // Prepare for next drag
           drag = false;
@@ -387,12 +418,15 @@ public final class Canvas extends AndroidViewComponent implements ComponentConta
       }
 
       // Update the values in the map with updated values
-      isDragMap.put(pointerID, isDrag);
-      dragMap.put(pointerID, drag);
-      startXMap.put(pointerID, startX);
-      startYMap.put(pointerID, startY);
-      lastXMap.put(pointerID, lastX);
-      lastYMap.put(pointerID, lastY);
+      // ACTION_MOVE handles this separately inside the case
+      if ( action != MotionEvent.ACTION_MOVE ) {
+	isDragMap.put(pointerID, isDrag);
+	dragMap.put(pointerID, drag);
+	startXMap.put(pointerID, startX);
+	startYMap.put(pointerID, startY);
+	lastXMap.put(pointerID, lastX);
+	lastYMap.put(pointerID, lastY);
+      }
     }
   }
 
@@ -1152,10 +1186,11 @@ public final class Canvas extends AndroidViewComponent implements ComponentConta
    *
    * @param x  x-coordinate of the point that was touched
    * @param y  y-coordinate of the point that was touched
+   * @param pointerID  ID of the pointer that touched
    */
   @SimpleEvent
-  public void TouchDown(float x, float y) {
-    EventDispatcher.dispatchEvent(this, "TouchDown", x, y);
+  public void TouchDown(float x, float y, int pointerID) {
+    EventDispatcher.dispatchEvent(this, "TouchDown", x, y, pointerID);
   }
 
   /**
@@ -1165,10 +1200,11 @@ public final class Canvas extends AndroidViewComponent implements ComponentConta
    *
    * @param x  x-coordinate of the point that was touched
    * @param y  y-coordinate of the point that was touched
+   * @param pointerID  ID of the pointer that touched
    */
   @SimpleEvent
-  public void TouchUp(float x, float y) {
-    EventDispatcher.dispatchEvent(this, "TouchUp", x, y);
+  public void TouchUp(float x, float y, int pointerID) {
+    EventDispatcher.dispatchEvent(this, "TouchUp", x, y, pointerID);
   }
 
   /**
@@ -1207,6 +1243,7 @@ public final class Canvas extends AndroidViewComponent implements ComponentConta
    * @param prevY the previous y-coordinate (possibly equal to startY)
    * @param currentX the current x-coordinate
    * @param currentY the current y-coordinate
+   * @param pointerID the ID of the pointer
    * @param draggedAnySprite {@code true} if
    *        {@link Sprite#Dragged(float, float, float, float, float, float)}
    *        was called for one or more sprites for this segment, {@code false}
@@ -1214,9 +1251,9 @@ public final class Canvas extends AndroidViewComponent implements ComponentConta
    */
   @SimpleEvent
   public void Dragged(float startX, float startY, float prevX, float prevY,
-                      float currentX, float currentY, boolean draggedAnySprite) {
+                      float currentX, float currentY, int pointerID, boolean draggedAnySprite) {
     EventDispatcher.dispatchEvent(this, "Dragged", startX, startY,
-                                  prevX, prevY, currentX, currentY, draggedAnySprite);
+                                  prevX, prevY, currentX, currentY, pointerID, draggedAnySprite);
   }
 
   // Functions
