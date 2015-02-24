@@ -23,6 +23,7 @@ import com.google.appinventor.components.runtime.util.ErrorMessages;
 import com.google.appinventor.components.runtime.util.FileUtil;
 import com.google.appinventor.components.runtime.util.MediaUtil;
 import com.google.appinventor.components.runtime.util.PaintUtil;
+import com.google.appinventor.components.runtime.util.SdkLevel;
 
 import android.app.Activity;
 import android.content.Context;
@@ -221,9 +222,9 @@ public final class Canvas extends AndroidViewComponent implements ComponentConta
 
 
       // Need to check the API level since multitouch isn't available
-      // on API levels below 8 (Android 2.2)
-      int apiLevel = Integer.valueOf(android.os.Build.VERSION.SDK);
-      if ( apiLevel >= 8 ) {
+      // on API levels below Froyo (Android 2.2)
+      int apiLevel = SdkLevel.getLevel();
+      if ( apiLevel >= SdkLevel.LEVEL_FROYO ) {
         action = event.getActionMasked();
         int pointerIndex = event.getActionIndex();
         x = event.getX(pointerIndex);
@@ -317,7 +318,7 @@ public final class Canvas extends AndroidViewComponent implements ComponentConta
 
 
 	    // We need to update the x,y if multitouch is supported
-	    if ( apiLevel >= 8 ) {
+	    if ( apiLevel >= SdkLevel.LEVEL_FROYO ) {
 	      int pointerIndex = event.findPointerIndex(pointerID);
 	      x = Math.max(0, (int)event.getX(pointerIndex));
 	      y = Math.max(0, (int)event.getY(pointerIndex));
